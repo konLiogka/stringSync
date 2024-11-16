@@ -2,13 +2,12 @@
 
 This is a guitar tuner app for Android.
 It utilizes the YIN algorithm for pitch detection, made thanks to this [paper](http://audition.ens.fr/adc/pdf/2002_JASA_YIN.pdf). [Here's](https://www.youtube.com/watch?v=pbleU_p67YU&t=7s) a video showing how it works.  
-> [!NOTE]
-> May lag on older phones, works very well on my samsung S10 though. Susceptible to noise! Be careful when tuning, let the note to ring.
  
 This is my first serious programming project. I chose this type of application because its not a common concept, not something that can be easily found as a free and open source app. There are pre-added tunings as well as the ability to add custom ones! 
 
 # 🛠Getting Started
-To install the program on you android device, simply download the build file from [here](https://github.com/konLiogka/guitarTuner/blob/main/app-debug.apk) and open it on your device. 
+Download the application from the releases page.
+
 On startup, the app is set to manual E standard tuning. To tune your guitar, simply select the note you want to adjust. On the top, there's an indicator as well as messages for tuning up/down or indicating that the string is OK. You can select another predefined tuning or simply add your own.
 
 # 🔬How it works
@@ -32,7 +31,6 @@ The program has multiple tunings pre-included as well as automatic tuning. Manua
 > There is a notable octave jumping in automatic tuning.
 > This is not a problem with manual tuning because I have set a specific value of cents that the note can range based on the selected string.
 > 
-![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
 
 ## Manual Tuning
 
