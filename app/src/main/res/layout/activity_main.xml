@@ -10,11 +10,10 @@
     tools:context=".MainActivity">
 
 
-
     <ImageView
         android:id="@+id/options"
-        android:layout_width="38dp"
-        android:layout_height="37dp"
+        android:layout_width="33dp"
+        android:layout_height="33dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="8dp"
         android:foreground="?android:attr/selectableItemBackground"
@@ -156,7 +155,7 @@
 
     <Button
         android:id="@+id/s4"
-        android:layout_width="82dp"
+        android:layout_width="72dp"
         android:layout_height="68dp"
         android:layout_marginTop="60dp"
         android:backgroundTint="#404040"
@@ -164,13 +163,12 @@
         android:textColor="@color/black"
         android:textSize="25dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/imageView"
         app:layout_constraintTop_toBottomOf="@+id/freq2" />
 
     <Button
         android:id="@+id/s5"
-        android:layout_width="82dp"
+        android:layout_width="72dp"
         android:layout_height="68dp"
         android:layout_marginTop="24dp"
         android:backgroundTint="#404040"
@@ -178,27 +176,27 @@
         android:textColor="@color/black"
         android:textSize="25dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/imageView"
         app:layout_constraintTop_toBottomOf="@+id/s4" />
 
     <Button
         android:id="@+id/s3"
-        android:layout_width="82dp"
-        android:layout_height="68dp"
+        android:layout_width="72dp"
+        android:layout_height="69dp"
         android:layout_marginTop="60dp"
         android:backgroundTint="#404040"
+        android:elevation="8dp"
         android:fontFamily="@font/vt323"
         android:textColor="@color/black"
         android:textSize="25dp"
+        android:translationZ="4dp"
         app:layout_constraintEnd_toStartOf="@+id/imageView"
-        app:layout_constraintHorizontal_bias="0.285"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/freq2" />
 
     <Button
         android:id="@+id/s2"
-        android:layout_width="82dp"
+        android:layout_width="72dp"
         android:layout_height="68dp"
         android:layout_marginTop="20dp"
         android:backgroundTint="#404040"
@@ -206,13 +204,12 @@
         android:textColor="@color/black"
         android:textSize="25dp"
         app:layout_constraintEnd_toStartOf="@+id/imageView"
-        app:layout_constraintHorizontal_bias="0.285"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/s3" />
 
     <Button
         android:id="@+id/s1"
-        android:layout_width="82dp"
+        android:layout_width="72dp"
         android:layout_height="68dp"
         android:backgroundTint="#404040"
         android:fontFamily="@font/vt323"
@@ -220,14 +217,13 @@
         android:textSize="25dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/imageView"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/s2"
         app:layout_constraintVertical_bias="0.146" />
 
     <Button
         android:id="@+id/s6"
-        android:layout_width="82dp"
+        android:layout_width="72dp"
         android:layout_height="68dp"
         android:layout_marginTop="20dp"
         android:backgroundTint="#404040"
@@ -235,7 +231,6 @@
         android:textColor="@color/black"
         android:textSize="25dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/imageView"
         app:layout_constraintTop_toBottomOf="@+id/s5" />
 
@@ -243,7 +238,7 @@
         android:id="@+id/indicator"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"

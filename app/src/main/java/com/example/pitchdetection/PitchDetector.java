@@ -7,23 +7,27 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
-import android.util.Log;
-
 
 import androidx.core.app.ActivityCompat;
 
-
-
 public class PitchDetector {
-    private static final int       SAMPLE_RATE = 44100;
-    private static final int       BUFFER_SIZE = 1024 *8;
-    public short[]                 buffer = new short[BUFFER_SIZE];
-    private AudioRecord            audioRecord;
-    private boolean                isRecording = false;
-    private PitchDetectionListener listener;
-    private Handler                handler;
+    private static final int SAMPLE_RATE = 44100;
+    private static final int BUFFER_SIZE = 1024 * 8;
 
+    private static final double THRESHOLD = 0.25;
+    private static final int SUB_OCTAVES = 4;
+
+    private final short[] buffer = new short[BUFFER_SIZE];
+    private AudioRecord audioRecord;
+    private boolean isRecording = false;
+    private PitchDetectionListener listener;
+    private Handler backgroundHandler;
+    private Handler uiHandler;
+    private HandlerThread handlerThread;
+
+    private double lastAmplitude = 0;
 
     public interface PitchDetectionListener {
         void onPitchDetected(double pitchFrequency);
@@ -33,161 +37,221 @@ public class PitchDetector {
         this.listener = listener;
     }
 
-    public void start(Context context) {
+    public synchronized void start(Context context) {
         if (isRecording) return;
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, BUFFER_SIZE);
+
+        initializeAudioRecord();
+
+        if (audioRecord == null || audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
+            return;
+        }
+
+        initializeHandlers();
         audioRecord.startRecording();
         isRecording = true;
-        handler = new Handler(Looper.getMainLooper());
-        handler.post(updatePitch);
+        backgroundHandler.post(updatePitch);
     }
-    // Stopping the detector
-    public void stop() {
-        // Check if recording, if not return.
+
+    private void initializeAudioRecord() {
+        audioRecord = new AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                BUFFER_SIZE
+        );
+    }
+
+    private void initializeHandlers() {
+        uiHandler = new Handler(Looper.getMainLooper());
+        handlerThread = new HandlerThread("PitchDetectionThread");
+        handlerThread.start();
+        backgroundHandler = new Handler(handlerThread.getLooper());
+    }
+
+    public synchronized void stop() {
         if (!isRecording) return;
-        // Stop recording
-        audioRecord.stop();
-        audioRecord.release();
+
         isRecording = false;
-        if (handler != null) {
-            handler.removeCallbacks(updatePitch);
-            handler = null;
+
+        if (audioRecord != null) {
+            try {
+                audioRecord.stop();
+                audioRecord.release();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            audioRecord = null;
+        }
+
+        if (backgroundHandler != null) {
+            backgroundHandler.removeCallbacks(updatePitch);
+            backgroundHandler = null;
+        }
+
+        if (handlerThread != null) {
+            handlerThread.quitSafely();
+            handlerThread = null;
         }
     }
-    // Continuously computing the pitch frequency
+
     private final Runnable updatePitch = new Runnable() {
         @Override
         public void run() {
+            if (!isRecording || audioRecord == null) return;
+
             int bytesRead = audioRecord.read(buffer, 0, BUFFER_SIZE);
             if (bytesRead > 0) {
-                double pitchFrequency = computePitchFrequency(buffer);
-                if (listener != null) {
-                    listener.onPitchDetected(pitchFrequency);
+                double amplitude = calculateAmplitude(buffer);
+                lastAmplitude = amplitude;
+
+                if (amplitude > 0.005) {
+                    double pitchFrequency = computePitchFrequency(buffer);
+                    if (pitchFrequency > 30 && pitchFrequency < 1000) {
+                        notifyListener(pitchFrequency);
+                    }
                 }
             }
-            if (isRecording) {
-                handler.post(this);
+
+            if (isRecording && backgroundHandler != null) {
+                backgroundHandler.post(this);
             }
         }
     };
 
-    private double computePitchFrequency(short[] audioBuffer) {
-        //Apply window
-        double[] Buffer = Window(audioBuffer);
-        int bufferSize = Buffer.length;
-        // Autocorrelation function
-        double[] difference=Autocorrelation(Buffer);
-        // Cumulative mean normalized difference function
-        double[]  cumulativeMeanNormalizedDifference = CumulativeMeanNormalizedDifference(difference, bufferSize);
-        // Absolute threshold
-        int lag = AbsoluteThreshold(cumulativeMeanNormalizedDifference,bufferSize);
-        lag = OctaveThreshold(  bufferSize, lag, cumulativeMeanNormalizedDifference);
-        //Calculating the interpolated peak using parabolic Interpolation along with absolute and octave based threshold
-        double interpolatedPeak = parabolicInterpolation(cumulativeMeanNormalizedDifference  , lag );
-        double pitchFrequency = SAMPLE_RATE / interpolatedPeak;
-        if (listener != null) {
-            listener.onPitchDetected(pitchFrequency);
+    private double calculateAmplitude(short[] audioBuffer) {
+        double sum = 0;
+        for (short value : audioBuffer) {
+            sum += Math.abs(value);
         }
-        return pitchFrequency;
+        return sum / audioBuffer.length / 32768.0;
+    }
 
-    }
-    private double[] Window( short[] audioBuffer){
-        double[] Buffer = new double[audioBuffer.length];
-        for (int i = 0; i < audioBuffer.length; i++) {
-            Buffer[i] = audioBuffer[i] / 32768.0  ;
+    private void notifyListener(double pitchFrequency) {
+        if (uiHandler != null && listener != null) {
+            uiHandler.post(() -> listener.onPitchDetected(pitchFrequency));
         }
-        return Buffer;
     }
-    private double[] Autocorrelation(double[] windowedBuffer){
+
+    private double computePitchFrequency(short[] audioBuffer) {
+        double[] windowedBuffer = applyWindow(audioBuffer);
+        int bufferSize = windowedBuffer.length;
+
+        double[] difference = computeAutocorrelation(windowedBuffer);
+        double[] cmndf = computeCumulativeMeanNormalizedDifference(difference, bufferSize);
+
+        int lag = findAbsoluteThreshold(cmndf, bufferSize);
+        lag = applyOctaveThreshold(bufferSize, lag, cmndf);
+
+        double interpolatedPeak = parabolicInterpolation(cmndf, lag);
+        return SAMPLE_RATE / interpolatedPeak;
+    }
+
+    private double[] applyWindow(short[] audioBuffer) {
+        double[] windowed = new double[audioBuffer.length];
+        for (int i = 0; i < audioBuffer.length; i++) {
+            windowed[i] = audioBuffer[i] / 32768.0;
+        }
+        return windowed;
+    }
+
+    private double[] computeAutocorrelation(double[] windowedBuffer) {
         int bufferSize = windowedBuffer.length;
         double[] difference = new double[bufferSize];
+
         for (int lag = 0; lag < bufferSize; lag++) {
+            double sum = 0;
             for (int index = 0; index < bufferSize - lag; index++) {
                 double diff = windowedBuffer[index] - windowedBuffer[index + lag];
-                difference[lag] += diff * diff;
+                sum += diff * diff;
             }
+            difference[lag] = sum;
         }
         return difference;
     }
 
-    private double[] CumulativeMeanNormalizedDifference(double[] difference, int bufferSize){
-        double[] cumulativeMeanNormalizedDifference = new double[bufferSize];
-        cumulativeMeanNormalizedDifference[0] = 1;
+    private double[] computeCumulativeMeanNormalizedDifference(double[] difference, int bufferSize) {
+        double[] cmndf = new double[bufferSize];
+        cmndf[0] = 1;
+
         for (int lag = 1; lag < bufferSize; lag++) {
-            double cmndf = 0;
-            for (int index = 1; index <= lag; index++) {
-                cmndf += difference[index];
+            double cumulativeSum = 0;
+            for (int i = 1; i <= lag; i++) {
+                cumulativeSum += difference[i];
             }
-            cumulativeMeanNormalizedDifference[lag] = difference[lag] / (cmndf / lag);
+            if (cumulativeSum / lag > 0) {
+                cmndf[lag] = difference[lag] / (cumulativeSum / lag);
+            } else {
+                cmndf[lag] = 1;
+            }
         }
-        return cumulativeMeanNormalizedDifference;
+        return cmndf;
     }
 
-    private int AbsoluteThreshold(double[] cumulativeMeanNormalizedDifference, int bufferSize){
-        double threshold = 0.3; // Adjust accordingly
+    private int findAbsoluteThreshold(double[] cmndf, int bufferSize) {
         int lag;
-        for (  lag = 1; lag < bufferSize-1; lag++) {
-            if(cumulativeMeanNormalizedDifference[lag-1]< threshold){
-                while (lag+1<bufferSize && cumulativeMeanNormalizedDifference[lag+1] < cumulativeMeanNormalizedDifference[lag]) {
-                    lag++;
+        double threshold = THRESHOLD;
 
+        if (lastAmplitude > 0.05) {
+            threshold = 0.2;
+        } else if (lastAmplitude > 0.02) {
+            threshold = 0.25;
+        }
+
+        for (lag = 1; lag < bufferSize - 1; lag++) {
+            if (cmndf[lag - 1] < threshold) {
+                while (lag + 1 < bufferSize && cmndf[lag + 1] < cmndf[lag]) {
+                    lag++;
                 }
                 break;
             }
         }
-        lag = lag >= bufferSize ? bufferSize - 1 : lag;
-        return lag;
+        return Math.min(lag, bufferSize - 1);
     }
 
-    private int OctaveThreshold(int bufferSize, int lag, double[] cumulativeMeanNormalizedDifference){
-        int subOctaves = 4;  // Adjust accordingly
-        int subOctaveSize = bufferSize / subOctaves;
+    private int applyOctaveThreshold(int bufferSize, int lag, double[] cmndf) {
+        int subOctaveSize = bufferSize / SUB_OCTAVES;
         int subOctaveStart = (lag / subOctaveSize) * subOctaveSize;
-        int subOctaveEnd = subOctaveStart + subOctaveSize;
-        for (int i = subOctaveStart + 1; i < subOctaveEnd && i < cumulativeMeanNormalizedDifference.length; i++) {
-            if (cumulativeMeanNormalizedDifference[i] < cumulativeMeanNormalizedDifference[lag]) {
+        int subOctaveEnd = Math.min(subOctaveStart + subOctaveSize, cmndf.length);
+
+        for (int i = subOctaveStart + 1; i < subOctaveEnd; i++) {
+            if (cmndf[i] < cmndf[lag]) {
                 lag = i;
             }
         }
         return lag;
     }
 
-    public double parabolicInterpolation(double[] cumulativeMeanNormalizedDifference , int lag  ) {
+    private double parabolicInterpolation(double[] cmndf, int lag) {
+        int x0 = Math.max(lag - 1, 0);
+        int x2 = Math.min(lag + 1, cmndf.length - 1);
 
-        int x0 = lag < 1 ? lag : lag - 1;
-        int x2 = lag + 1 < cumulativeMeanNormalizedDifference.length ? lag + 1 : lag;
-        double newLag;
         if (x0 == lag) {
-            if (cumulativeMeanNormalizedDifference[lag] <= cumulativeMeanNormalizedDifference[x2]) {
-                newLag = lag;
-            } else {
-                newLag = x2;
-            }
-        } else if (x2 == lag) {
-            if (cumulativeMeanNormalizedDifference[lag] <= cumulativeMeanNormalizedDifference[x0]) {
-                newLag = lag;
-            } else {
-                newLag = x0;
-            }
-        } else {
-            double s0 = cumulativeMeanNormalizedDifference[x0];
-            double s1 = cumulativeMeanNormalizedDifference[lag];
-            double s2 = cumulativeMeanNormalizedDifference[x2];
-            newLag = lag + (s2 - s0) / (2 * (2 * s1 - s2 - s0));
+            return cmndf[lag] <= cmndf[x2] ? lag : x2;
         }
-        return newLag;
+
+        if (x2 == lag) {
+            return cmndf[lag] <= cmndf[x0] ? lag : x0;
+        }
+
+        double s0 = cmndf[x0];
+        double s1 = cmndf[lag];
+        double s2 = cmndf[x2];
+
+        double denominator = 2 * (2 * s1 - s2 - s0);
+        if (Math.abs(denominator) < 0.0001) {
+            return lag;
+        }
+
+        return lag + (s2 - s0) / denominator;
     }
 
+    public boolean isRecording() {
+        return isRecording;
+    }
 }
-
-
-
-
-
-
-
-
