@@ -1,6 +1,7 @@
 package com.example.pitchdetection;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
@@ -15,7 +16,6 @@ import androidx.core.app.ActivityCompat;
 public class PitchDetector {
     private static final int SAMPLE_RATE = 44100;
     private static final int BUFFER_SIZE = 1024 * 8;
-
     private static final double THRESHOLD = 0.25;
     private static final int SUB_OCTAVES = 4;
 
@@ -57,6 +57,7 @@ public class PitchDetector {
         backgroundHandler.post(updatePitch);
     }
 
+    @SuppressLint("MissingPermission")
     private void initializeAudioRecord() {
         audioRecord = new AudioRecord(
                 MediaRecorder.AudioSource.MIC,
