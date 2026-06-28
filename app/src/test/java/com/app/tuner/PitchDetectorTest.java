@@ -104,7 +104,7 @@ public class PitchDetectorTest {
 
     @Test
     public void testWindowEdgesAreNearZero() {
-        short[] buffer = new short[DETECTOR_BUFFER_SIZE];
+        short[] buffer = new short[PitchDetector.BUFFER_SIZE];
         for (int i = 0; i < buffer.length; i++) buffer[i] = Short.MAX_VALUE;
         double[] windowed = pitchDetector.applyWindow(buffer);
         assertEquals("Hann window first sample should be ~0, got: " + windowed[0], 0.0, windowed[0], 0.01);
@@ -131,10 +131,10 @@ public class PitchDetectorTest {
 
     @Test
     public void testCmndfLengthIsHalfBuffer() {
-        double[] difference = new double[DETECTOR_BUFFER_SIZE / 2];
+        double[] difference = new double[PitchDetector.BUFFER_SIZE / 2];
         double[] cmndf = pitchDetector.computeCumulativeMeanNormalizedDifference(
-                difference, DETECTOR_BUFFER_SIZE / 2);
-        assertEquals(DETECTOR_BUFFER_SIZE / 4, cmndf.length);
+                difference, PitchDetector.BUFFER_SIZE / 2);
+        assertEquals(PitchDetector.BUFFER_SIZE / 4, cmndf.length);
     }
 
 @Test

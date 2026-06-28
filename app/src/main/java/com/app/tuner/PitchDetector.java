@@ -14,8 +14,8 @@ import android.os.Looper;
 import androidx.core.app.ActivityCompat;
 
 public class PitchDetector {
+    static final int BUFFER_SIZE = 1024 * 8;
     private static final int SAMPLE_RATE = 44100;
-    private static final int BUFFER_SIZE = 1024 * 8;
     private static final double THRESHOLD = 0.25;
     private static final int SUB_OCTAVES = 4;
 
