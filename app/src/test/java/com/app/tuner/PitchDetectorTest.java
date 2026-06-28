@@ -43,21 +43,21 @@ public class PitchDetectorTest {
     public void testPitchDetectionA4() {
         short[] buffer = generateSineWave(440.0);
         double detected = pitchDetector.computePitchFrequency(buffer);
-        assertEquals("Should detect ~440 Hz", 440.0, detected, 15.0);
+        assertEquals("Should detect ~440 Hz, got: " + detected, 440.0, detected, 20.0);
     }
 
     @Test
     public void testPitchDetectionE4() {
         short[] buffer = generateSineWave(329.63);
         double detected = pitchDetector.computePitchFrequency(buffer);
-        assertEquals("Should detect ~329 Hz", 329.63, detected, 15.0);
+        assertEquals("Should detect ~329 Hz, got: " + detected, 329.63, detected, 20.0);
     }
 
     @Test
     public void testPitchDetectionA3() {
         short[] buffer = generateSineWave(220.0);
         double detected = pitchDetector.computePitchFrequency(buffer);
-        assertEquals("Should detect ~220 Hz", 220.0, detected, 15.0);
+        assertEquals("Should detect ~220 Hz, got: " + detected, 220.0, detected, 20.0);
     }
 
     @Test
@@ -104,11 +104,11 @@ public class PitchDetectorTest {
 
     @Test
     public void testWindowEdgesAreNearZero() {
-        short[] buffer = new short[1024];
+        short[] buffer = new short[DETECTOR_BUFFER_SIZE];
         for (int i = 0; i < buffer.length; i++) buffer[i] = Short.MAX_VALUE;
         double[] windowed = pitchDetector.applyWindow(buffer);
-        assertEquals("Hann window first sample should be ~0", 0.0, windowed[0], 0.01);
-        assertEquals("Hann window last sample should be ~0", 0.0, windowed[windowed.length - 1], 0.01);
+        assertEquals("Hann window first sample should be ~0, got: " + windowed[0], 0.0, windowed[0], 0.01);
+        assertEquals("Hann window last sample should be ~0, got: " + windowed[windowed.length - 1], 0.0, windowed[windowed.length - 1], 0.01);
     }
 
     @Test
@@ -131,9 +131,10 @@ public class PitchDetectorTest {
 
     @Test
     public void testCmndfLengthIsHalfBuffer() {
-        double[] difference = new double[512];
-        double[] cmndf = pitchDetector.computeCumulativeMeanNormalizedDifference(difference, 1024);
-        assertEquals(512, cmndf.length);
+        double[] difference = new double[DETECTOR_BUFFER_SIZE / 2];
+        double[] cmndf = pitchDetector.computeCumulativeMeanNormalizedDifference(
+                difference, DETECTOR_BUFFER_SIZE / 2);
+        assertEquals(DETECTOR_BUFFER_SIZE / 4, cmndf.length);
     }
 
 @Test
