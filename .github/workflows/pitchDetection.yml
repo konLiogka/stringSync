@@ -32,6 +32,7 @@ jobs:
       
       - name: Upload test results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: test-results
           path: app/build/reports/tests/
@@ -39,22 +40,8 @@ jobs:
       
       - name: Upload test report
         uses: actions/upload-artifact@v4
-        with:
-          name: test-report-html
-          path: app/build/reports/tests/testDebugUnitTest/index.html
-          retention-days: 30
-
-  test-report:
-    name: Test Report Summary
-    needs: test
-    runs-on: ubuntu-latest
-    if: always()
-    
-    steps:
-      - name: Upload test report
-        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-report-html
-          path: test-results/
+          path: app/build/reports/tests/testDebugUnitTest/index.html
           retention-days: 30
