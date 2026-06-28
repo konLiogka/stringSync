@@ -1,6 +1,6 @@
-package com.example.pitchdetection;
+package com.app.tuner;
 
-import static com.example.pitchdetection.TuningsList.*;
+import static com.app.tuner.TuningsList.*;
 
 import android.Manifest;
 import android.content.Context;
@@ -25,9 +25,9 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.pitchdetection.models.Note;
-import com.example.pitchdetection.models.Tuning;
-import com.example.pitchdetection.viewmodels.MainViewModel;
+import com.app.tuner.models.Note;
+import com.app.tuner.models.Tuning;
+import com.app.tuner.viewmodels.MainViewModel;
 
 import java.util.Arrays;
 import java.util.List;
@@ -359,7 +359,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void updatePointerPosition(double cents) {
-        int maxOffset = 600;
+        int maxOffset = 500;
         double maxCents = 50.0;
         double minCents = -50.0;
 

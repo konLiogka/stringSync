@@ -1,4 +1,4 @@
-package com.example.pitchdetection;
+package com.app.tuner;
 
 import android.content.Context;
 import android.content.SharedPreferences;

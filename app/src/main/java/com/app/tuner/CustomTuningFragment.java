@@ -1,4 +1,4 @@
-package com.example.pitchdetection;
+package com.app.tuner;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -14,7 +14,7 @@ import android.widget.Spinner;
 
 import androidx.fragment.app.Fragment;
 
-import com.example.pitchdetection.models.Tuning;
+import com.app.tuner.models.Tuning;
 
 import java.util.Arrays;
 

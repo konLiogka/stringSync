@@ -1,4 +1,4 @@
-package com.example.pitchdetection;
+package com.app.tuner;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,7 +10,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.pitchdetection.models.Tuning;
+import com.app.tuner.models.Tuning;
 
 import java.util.List;
 

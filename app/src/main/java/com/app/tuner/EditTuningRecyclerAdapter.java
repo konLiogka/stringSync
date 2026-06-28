@@ -1,4 +1,4 @@
-package com.example.pitchdetection;
+package com.app.tuner;
 
 import android.app.AlertDialog;
 import android.view.LayoutInflater;

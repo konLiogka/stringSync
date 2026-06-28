@@ -1,4 +1,4 @@
-package com.example.pitchdetection;
+package com.app.tuner;
 
 import android.Manifest;
 import android.annotation.SuppressLint;

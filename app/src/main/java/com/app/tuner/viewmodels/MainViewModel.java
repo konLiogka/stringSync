@@ -1,4 +1,4 @@
-package com.example.pitchdetection.viewmodels;
+package com.app.tuner.viewmodels;
 
 import android.widget.Button;
 
@@ -6,8 +6,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.pitchdetection.models.Note;
-import com.example.pitchdetection.models.Tuning;
+import com.app.tuner.models.Note;
+import com.app.tuner.models.Tuning;
 
 import java.util.ArrayList;
 import java.util.List;

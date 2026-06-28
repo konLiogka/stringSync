@@ -1,4 +1,4 @@
-package com.example.pitchdetection.models;
+package com.app.tuner.models;
 
 import java.util.Arrays;
 import java.util.List;
