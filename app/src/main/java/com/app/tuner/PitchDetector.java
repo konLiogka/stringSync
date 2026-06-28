@@ -58,7 +58,7 @@ public class PitchDetector {
     }
 
     @SuppressLint("MissingPermission")
-    private void initializeAudioRecord() {
+    void initializeAudioRecord() {
         audioRecord = new AudioRecord(
                 MediaRecorder.AudioSource.MIC,
                 SAMPLE_RATE,
@@ -68,7 +68,7 @@ public class PitchDetector {
         );
     }
 
-    private void initializeHandlers() {
+    void initializeHandlers() {
         uiHandler = new Handler(Looper.getMainLooper());
         handlerThread = new HandlerThread("PitchDetectionThread");
         handlerThread.start();
@@ -101,7 +101,7 @@ public class PitchDetector {
         }
     }
 
-    private final Runnable updatePitch = new Runnable() {
+    final Runnable updatePitch = new Runnable() {
         @Override
         public void run() {
             if (!isRecording || audioRecord == null) return;
@@ -125,7 +125,7 @@ public class PitchDetector {
         }
     };
 
-    private double calculateAmplitude(short[] audioBuffer) {
+    double calculateAmplitude(short[] audioBuffer) {
         double sum = 0;
         for (short value : audioBuffer) {
             sum += Math.abs(value);
@@ -133,13 +133,13 @@ public class PitchDetector {
         return sum / audioBuffer.length / 32768.0;
     }
 
-    private void notifyListener(double pitchFrequency) {
+    void notifyListener(double pitchFrequency) {
         if (uiHandler != null && listener != null) {
             uiHandler.post(() -> listener.onPitchDetected(pitchFrequency));
         }
     }
 
-    private double computePitchFrequency(short[] audioBuffer) {
+    double computePitchFrequency(short[] audioBuffer) {
         double[] windowedBuffer = applyWindow(audioBuffer);
         int bufferSize = windowedBuffer.length;
 
@@ -153,7 +153,7 @@ public class PitchDetector {
         return SAMPLE_RATE / interpolatedPeak;
     }
 
-    private double[] applyWindow(short[] audioBuffer) {
+    double[] applyWindow(short[] audioBuffer) {
         double[] windowed = new double[audioBuffer.length];
         for (int i = 0; i < audioBuffer.length; i++) {
             windowed[i] = audioBuffer[i] / 32768.0;
@@ -161,7 +161,7 @@ public class PitchDetector {
         return windowed;
     }
 
-    private double[] computeAutocorrelation(double[] windowedBuffer) {
+    double[] computeAutocorrelation(double[] windowedBuffer) {
         int bufferSize = windowedBuffer.length;
         double[] difference = new double[bufferSize];
 
@@ -176,7 +176,7 @@ public class PitchDetector {
         return difference;
     }
 
-    private double[] computeCumulativeMeanNormalizedDifference(double[] difference, int bufferSize) {
+    double[] computeCumulativeMeanNormalizedDifference(double[] difference, int bufferSize) {
         double[] cmndf = new double[bufferSize];
         cmndf[0] = 1;
 
@@ -194,7 +194,7 @@ public class PitchDetector {
         return cmndf;
     }
 
-    private int findAbsoluteThreshold(double[] cmndf, int bufferSize) {
+    int findAbsoluteThreshold(double[] cmndf, int bufferSize) {
         int lag;
         double threshold = THRESHOLD;
 
@@ -215,7 +215,7 @@ public class PitchDetector {
         return Math.min(lag, bufferSize - 1);
     }
 
-    private int applyOctaveThreshold(int bufferSize, int lag, double[] cmndf) {
+    int applyOctaveThreshold(int bufferSize, int lag, double[] cmndf) {
         int subOctaveSize = bufferSize / SUB_OCTAVES;
         int subOctaveStart = (lag / subOctaveSize) * subOctaveSize;
         int subOctaveEnd = Math.min(subOctaveStart + subOctaveSize, cmndf.length);
@@ -228,7 +228,7 @@ public class PitchDetector {
         return lag;
     }
 
-    private double parabolicInterpolation(double[] cmndf, int lag) {
+    double parabolicInterpolation(double[] cmndf, int lag) {
         int x0 = Math.max(lag - 1, 0);
         int x2 = Math.min(lag + 1, cmndf.length - 1);
 
