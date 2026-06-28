@@ -1,16 +1,17 @@
 name: Run Unit Tests
 
 on:
-  push:
-    branches: [ main, master, develop ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_run:
+    workflows: ["Build"]  
+    types:
+      - completed
   workflow_dispatch:   
 
 jobs:
   test:
     name: Run Unit Tests
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     
     steps:
       - name: Checkout code
@@ -36,7 +37,7 @@ jobs:
           path: app/build/reports/tests/
           retention-days: 30
       
-      - name: Publish test report
+      - name: Upload test report
         uses: actions/upload-artifact@v4
         with:
           name: test-report-html
@@ -55,16 +56,17 @@ jobs:
         with:
           name: test-results
           path: test-results
+        continue-on-error: true
       
       - name: Display test summary
         run: |
-          echo "## 📊 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ -f "test-results/testDebugUnitTest/index.html" ]; then
-            echo "✅ Tests completed successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "Success!" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "📁 **Test Report:** Download the 'test-report-html' artifact to view the full report." >> $GITHUB_STEP_SUMMARY
+            echo "**Test Report:** Download the 'test-report-html' artifact to view the full report." >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Tests failed!" >> $GITHUB_STEP_SUMMARY
+            echo "Fail!" >> $GITHUB_STEP_SUMMARY
           fi
